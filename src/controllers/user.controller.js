@@ -90,7 +90,29 @@ const login = async (req,res)=>{
 
 
 const resetPassword = async (req,res)=>{
-    return res.send("restpassword")
+    const { username, email, newPassword } = req.body;
+
+    if (!username && !email) {
+      return res.status(400).json({ errors: "username or email is required" });
+    }
+  
+    const user = await User.findOne({
+      $or: [{ username }, { email }],
+    });
+  
+    if (!user) {
+      return res.status(400).json({ errors: "User with email or username doesn't exists" });
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ errors: "Password length should be minimum of 6" });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+
+    await user.save();
+
+    res.status(200).json({ msg: 'Password updated successfully' });
 }
 
 export {register,
