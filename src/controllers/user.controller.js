@@ -1,4 +1,6 @@
 import { User } from "../models/user.model.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 
 const register = async (req,res)=>{
@@ -48,7 +50,42 @@ const register = async (req,res)=>{
 
 
 const login = async (req,res)=>{
-    return res.send("login")
+  const { username, email, password } = req.body;
+
+  if (!username && !email) {
+    return res.status(400).json({ errors: "username or email is required" });
+  }
+
+  const user = await User.findOne({
+    $or: [{ username }, { email }],
+  });
+
+  if (!user) {
+    return res.status(400).json({ errors: "User with email or username doesn't exists" });
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    return res.status(400).json({ msg: 'Invalid Credentials' });
+  }
+
+    const payload = {
+        user: {
+            id: user.username,
+        },
+    };
+
+ await jwt.sign(
+    payload,
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY },
+    (err, token) => {
+        if (err) throw err;
+        res.json({ token });
+    }
+ );
+
 }
 
 
