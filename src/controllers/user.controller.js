@@ -108,9 +108,9 @@ const resetPassword = async (req,res)=>{
         return res.status(400).json({ errors: "Password length should be minimum of 6" });
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.password=newPassword;
 
-    await user.save();
+    await user.save({validateBeforeSave: false});
 
     res.status(200).json({ msg: 'Password updated successfully' });
 }
